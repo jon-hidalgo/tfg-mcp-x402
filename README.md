@@ -37,7 +37,7 @@ Arrancar el servicio local:
 uv run uvicorn tfg_mcp_x402.app:app --reload
 ```
 
-La API expone `GET /health`, `POST /mcp/tools/echo` y `POST /mcp/tools/echo/paid`.
+La API expone `GET /health`, una frontera JSON-RPC MCP mínima en `POST /mcp` y su variante protegida en `POST /mcp/paid`. Los endpoints REST `POST /mcp/tools/echo` y `POST /mcp/tools/echo/paid` se conservan como línea base auxiliar.
 
 ## Seguridad del prototipo
 
