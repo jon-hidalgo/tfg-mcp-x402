@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from tfg_mcp_x402.app import app
@@ -37,14 +39,14 @@ def valid_proof(nonce: str) -> dict[str, object]:
 def test_paid_echo_accepts_valid_synthetic_proof() -> None:
     response = client.post(
         "/mcp/tools/echo/paid",
-        headers={"x-payment-proof": str(valid_proof("nonce-valid"))},
+        headers={"x-payment-proof": json.dumps(valid_proof("nonce-valid"))},
         json={"message": "hello"},
     )
     assert response.status_code == 200
 
 
 def test_paid_echo_rejects_reused_nonce() -> None:
-    headers = {"x-payment-proof": str(valid_proof("nonce-reused"))}
+    headers = {"x-payment-proof": json.dumps(valid_proof("nonce-reused"))}
     first = client.post("/mcp/tools/echo/paid", headers=headers, json={"message": "hello"})
     second = client.post("/mcp/tools/echo/paid", headers=headers, json={"message": "hello"})
     assert first.status_code == 200

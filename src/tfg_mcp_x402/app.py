@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import time
 from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException, Request, status
+from fastapi import FastAPI, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
 from .domain import LocalStore, PaymentProof, SyntheticFacilitator, VerificationError
@@ -46,8 +47,7 @@ def baseline_echo(payload: EchoRequest) -> dict[str, str]:
 @app.post("/mcp/tools/echo/paid")
 def paid_echo(
     payload: EchoRequest,
-    request: Request,
-    x_payment_proof: Annotated[SyntheticPayment | None, Header()] = None,
+    x_payment_proof: Annotated[str | None, Header()] = None,
 ) -> dict[str, str]:
     if x_payment_proof is None:
         raise HTTPException(
@@ -60,7 +60,11 @@ def paid_echo(
             },
         )
 
-    proof = PaymentProof(**x_payment_proof.model_dump())
+    try:
+        proof_payload = json.loads(x_payment_proof)
+        proof = PaymentProof(**SyntheticPayment.model_validate(proof_payload).model_dump())
+    except (json.JSONDecodeError, TypeError, ValueError) as error:
+        raise HTTPException(status_code=400, detail="invalid_payment_proof") from error
     try:
         facilitator.verify(proof, resource=PAID_RESOURCE, now=int(time.time()))
     except VerificationError as error:
